@@ -97,6 +97,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const logEl = document.getElementById("log");
   const categoryFilter = document.getElementById("categoryFilter");
   const speakToggle = document.getElementById("speakToggle");
+  const themeToggle = document.getElementById("themeToggle");
 
   loadQA(logEl, categoryFilter);
 
@@ -110,5 +111,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
   speakToggle.addEventListener("change", e => {
     shouldSpeak = e.target.checked;
+  });
+
+  themeToggle.addEventListener("change", e => {
+    document.documentElement.setAttribute("data-theme", e.target.checked ? "light" : "dark");
   });
 });

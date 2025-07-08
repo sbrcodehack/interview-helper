@@ -1,26 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🎙️ .NET Interview Helper</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1536/1536522.png" />
+  <script src="script.js" defer></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-white">
-  <div class="max-w-3xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-4">🎙️ .NET Interview Helper</h1>
+<body class="bg-black text-white dark:bg-white dark:text-black min-h-screen flex flex-col">
 
-    <div class="bg-gray-800 p-4 rounded mb-4">
-      <button id="startListening" class="bg-green-500 text-black px-4 py-2 rounded">🎤 Start Listening</button>
-      <button id="clearHistory" class="bg-yellow-500 text-black px-4 py-2 rounded ml-2">🧹 Clear History</button>
+  <div class="p-6 max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-3xl font-bold">🎙️ .NET Interview Voice Assistant</h1>
+      <div class="flex gap-4">
+        <label class="flex items-center gap-2">
+          🎧 Speak
+          <input type="checkbox" id="speakToggle" checked />
+        </label>
+        <label class="flex items-center gap-2">
+          🌓 Theme
+          <input type="checkbox" id="themeToggle" />
+        </label>
+      </div>
     </div>
 
-    <div class="bg-gray-800 p-4 rounded">
-      <h2 class="text-xl font-semibold mb-2">📝 Recent Q&As</h2>
-      <div id="log" class="space-y-4"></div>
+    <div class="flex gap-4 mb-4">
+      <button id="startListening" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">🎤 Start Listening</button>
+      <button id="clearHistory" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded">🧹 Clear History</button>
+      <select id="categoryFilter" class="bg-gray-800 text-white dark:bg-white dark:text-black px-3 py-2 rounded border">
+        <option>All</option>
+      </select>
     </div>
+
+    <div id="log" class="space-y-4"></div>
   </div>
 
-  <script src="script.js"></script>
+  <footer class="mt-auto text-center py-4 text-sm bg-gray-900 text-gray-400 dark:bg-gray-200 dark:text-gray-700">
+    &copy; 2025 Shabbeer Mujawar. All rights reserved.
+  </footer>
 </body>
 </html>
