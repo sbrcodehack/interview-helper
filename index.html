@@ -12,14 +12,27 @@
       color: #fff;
       margin: 0;
       padding: 1rem;
+      transition: background 0.3s, color 0.3s;
     }
     .light {
-      background-color: #f8f8f8;
+      background-color: #f9f9f9;
       color: #000;
     }
-    .header { display: flex; justify-content: space-between; align-items: center; }
-    .controls { margin: 1rem 0; display: flex; gap: 1rem; }
-    .log { margin-top: 1rem; }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .controls {
+      margin: 1rem 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .log {
+      margin-top: 1rem;
+    }
     .block {
       background: #222;
       border-left: 4px solid #00ff88;
@@ -27,29 +40,46 @@
       margin-bottom: 1rem;
       border-radius: 6px;
     }
+    .light .block {
+      background: #eee;
+      border-left: 4px solid #00aa88;
+    }
     .footer {
       margin-top: 2rem;
       font-size: 0.9rem;
       text-align: center;
       color: gray;
     }
+    label {
+      font-size: 1rem;
+    }
+    input[type="checkbox"] {
+      transform: scale(1.2);
+      margin-left: 0.5rem;
+    }
     button {
-      padding: 6px 12px;
-      font-family: inherit;
-      font-size: 14px;
+      font-size: 1rem;
+      padding: 0.4rem 1rem;
+      background-color: crimson;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: darkred;
     }
   </style>
 </head>
 <body>
   <div class="header">
     <h2>🎙️ .NET Interview Helper</h2>
-    <label>🌗 <input type="checkbox" id="themeToggle"> Toggle Theme</label>
-  </div>
-
-  <div class="controls">
-    <label>🔊 Speak: <input type="checkbox" id="speakToggle" checked /></label>
-    <button id="micToggle">🎤 Mic Off</button>
-    <button id="clearLog">🧹 Clear Log</button>
+    <div class="controls">
+      <label>🌗 Theme <input type="checkbox" id="themeToggle" /></label>
+      <label>🔊 Speak <input type="checkbox" id="speakToggle" checked /></label>
+      <label>🎤 Mic <input type="checkbox" id="micToggle" checked /></label>
+      <button id="clearLog">🧹 Clear Log</button>
+    </div>
   </div>
 
   <div id="log" class="log"></div>
