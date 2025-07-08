@@ -3,41 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🎙️ .NET Interview Helper</title>
-  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1536/1536522.png" />
-  <script src="script.js" defer></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>.NET Interview Helper - Shabbeer</title>
+  <script defer src="script.js"></script>
+  <style>
+    body {
+      font-family: Consolas, monospace;
+      background-color: #111;
+      color: #fff;
+      margin: 0;
+      padding: 1rem;
+    }
+    .light {
+      background-color: #f8f8f8;
+      color: #000;
+    }
+    .header { display: flex; justify-content: space-between; align-items: center; }
+    .controls { margin: 1rem 0; }
+    .log { margin-top: 1rem; }
+    .block {
+      background: #222;
+      border-left: 4px solid #00ff88;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+    }
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      text-align: center;
+      color: gray;
+    }
+  </style>
 </head>
-<body class="bg-black text-white dark:bg-white dark:text-black min-h-screen flex flex-col">
-
-  <div class="p-6 max-w-4xl mx-auto">
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-3xl font-bold">🎙️ .NET Interview Voice Assistant</h1>
-      <div class="flex gap-4">
-        <label class="flex items-center gap-2">
-          🎧 Speak
-          <input type="checkbox" id="speakToggle" checked />
-        </label>
-        <label class="flex items-center gap-2">
-          🌓 Theme
-          <input type="checkbox" id="themeToggle" />
-        </label>
-      </div>
-    </div>
-
-    <div class="flex gap-4 mb-4">
-      <button id="startListening" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">🎤 Start Listening</button>
-      <button id="clearHistory" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded">🧹 Clear History</button>
-      <select id="categoryFilter" class="bg-gray-800 text-white dark:bg-white dark:text-black px-3 py-2 rounded border">
-        <option>All</option>
-      </select>
-    </div>
-
-    <div id="log" class="space-y-4"></div>
+<body>
+  <div class="header">
+    <h2>🎙️ .NET Interview Helper</h2>
+    <label>🌗 <input type="checkbox" id="themeToggle"> Toggle Theme</label>
   </div>
 
-  <footer class="mt-auto text-center py-4 text-sm bg-gray-900 text-gray-400 dark:bg-gray-200 dark:text-gray-700">
-    &copy; 2025 Shabbeer Mujawar. All rights reserved.
-  </footer>
+  <div class="controls">
+    <label>🔊 Speak: <input type="checkbox" id="speakToggle" checked /></label>
+  </div>
+
+  <div id="log" class="log"></div>
+
+  <div class="footer">
+    &copy; 2025 Shabbeer Mujawar
+  </div>
 </body>
 </html>

@@ -1,27 +1,25 @@
-const apiURL = "https://script.google.com/macros/s/AKfycbwmnr7mQYFgAYBnyIxCDGuSDiHBwzXTjpszpKr1-4Sd6UDMlAktosjQZjvlGCwRyiwD/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbzpewxrflhfwpk3fDlyE6y-cNqEVfk1XRecioxe6lPtPgeebz5LHaOteu5hv2lIjRnuXg/exec";
 let qaList = [];
 let askedQuestions = new Set();
 let shouldSpeak = true;
+let recognition = null;
+let isRecognizing = false;
 
 function similarity(a, b) {
   const common = a.split(" ").filter(w => b.includes(w)).length;
   return (common * 2) / (a.split(" ").length + b.split(" ").length) * 100;
 }
 
-function fuzzyMatch(input, categoryFilter) {
+function fuzzyMatch(input) {
   input = input.toLowerCase().trim();
   let best = { score: 0, question: null, answer: null };
-  const selectedCategory = categoryFilter.value;
-
   qaList.forEach(row => {
-    if (selectedCategory !== "All" && row.Category !== selectedCategory) return;
     const q = row.Question.toLowerCase().trim();
     const score = similarity(input, q);
     if (score > best.score) {
       best = { score, question: row.Question, answer: row.Answer };
     }
   });
-
   return best.score > 40 ? best : null;
 }
 
@@ -31,16 +29,17 @@ function speak(text) {
   speechSynthesis.speak(utterance);
 }
 
-function displayLog(logEl, original, matchedQ, answer) {
+function displayLog(original, matchedQ, answer) {
+  const logEl = document.getElementById("log");
   if (askedQuestions.has(matchedQ)) return;
   askedQuestions.add(matchedQ);
 
   const block = document.createElement("div");
-  block.className = "bg-gray-700 dark:bg-gray-200 p-4 rounded border-l-4 border-green-400";
+  block.className = "block";
   block.innerHTML = `
-    <p class="text-green-300 dark:text-green-700 font-semibold">👂 Heard: ${original}</p>
-    <p class="text-blue-300 dark:text-blue-700">🔍 Matched: ${matchedQ}</p>
-    <p class="text-white dark:text-black">📘 Answer: ${answer}</p>
+    <p><strong>👂 Heard:</strong> ${original}</p>
+    <p style="font-size: 1.6rem; color: cyan;"><strong>🔍 Matched:</strong> ${matchedQ}</p>
+    <p><strong>📘 Answer:</strong> ${answer}</p>
   `;
   logEl.prepend(block);
   if (logEl.children.length > 3) logEl.removeChild(logEl.lastChild);
@@ -48,72 +47,63 @@ function displayLog(logEl, original, matchedQ, answer) {
   speak(`Question: ${matchedQ}. Answer: ${answer}`);
 }
 
-function startListening(logEl, categoryFilter) {
-  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+function startListening() {
+  if (isRecognizing || !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+    return;
+  }
+
+  recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
   recognition.lang = "en-US";
   recognition.continuous = true;
   recognition.interimResults = false;
 
+  recognition.onstart = () => {
+    isRecognizing = true;
+    console.log("🎤 Listening...");
+  };
+
   recognition.onresult = e => {
     const transcript = e.results[e.results.length - 1][0].transcript;
-    const match = fuzzyMatch(transcript, categoryFilter);
+    const match = fuzzyMatch(transcript);
     if (match) {
-      displayLog(logEl, transcript, match.question, match.answer);
+      displayLog(transcript, match.question, match.answer);
     }
   };
 
+  recognition.onerror = (e) => {
+    console.warn("🎤 Error:", e.error);
+    recognition.stop();
+  };
+
+  recognition.onend = () => {
+    isRecognizing = false;
+    setTimeout(() => {
+      startListening(); // restart after short delay
+    }, 1500);
+  };
+
   recognition.start();
-  console.log("🎤 Listening...");
 }
 
-function clearHistory(logEl) {
-  askedQuestions.clear();
-  logEl.innerHTML = "";
-}
-
-function loadCategories(qaList, categoryFilter) {
-  const categories = [...new Set(qaList.map(row => row.Category))];
-  categoryFilter.innerHTML = '<option value="All">All</option>';
-  categories.forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
-    categoryFilter.appendChild(option);
-  });
-}
-
-function loadQA(logEl, categoryFilter) {
+function loadQA() {
   fetch(apiURL)
     .then(res => res.json())
     .then(data => {
       qaList = data;
-      console.log("✅ Loaded Q&A", qaList);
-      loadCategories(qaList, categoryFilter);
+      console.log("✅ Q&A Loaded", qaList);
+      startListening();
     })
     .catch(err => console.error("❌ Failed to fetch Q&A", err));
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  const logEl = document.getElementById("log");
-  const categoryFilter = document.getElementById("categoryFilter");
-  const speakToggle = document.getElementById("speakToggle");
-  const themeToggle = document.getElementById("themeToggle");
-
-  loadQA(logEl, categoryFilter);
-
-  document.getElementById("startListening").addEventListener("click", () =>
-    startListening(logEl, categoryFilter)
-  );
-
-  document.getElementById("clearHistory").addEventListener("click", () =>
-    clearHistory(logEl)
-  );
-
-  speakToggle.addEventListener("change", e => {
+  document.getElementById("speakToggle").addEventListener("change", e => {
     shouldSpeak = e.target.checked;
   });
 
-  themeToggle.addEventListener("change", e => {
-    document.documentElement.setAttribute("data-theme", e.target.checked ? "light" : "dark");
+  document.getElementById("themeToggle").addEventListener("change", e => {
+    document.body.classList.toggle("light");
   });
+
+  loadQA();
 });
