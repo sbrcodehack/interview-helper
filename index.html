@@ -18,7 +18,7 @@
       color: #000;
     }
     .header { display: flex; justify-content: space-between; align-items: center; }
-    .controls { margin: 1rem 0; }
+    .controls { margin: 1rem 0; display: flex; gap: 1rem; }
     .log { margin-top: 1rem; }
     .block {
       background: #222;
@@ -33,6 +33,11 @@
       text-align: center;
       color: gray;
     }
+    button {
+      padding: 6px 12px;
+      font-family: inherit;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -43,6 +48,8 @@
 
   <div class="controls">
     <label>🔊 Speak: <input type="checkbox" id="speakToggle" checked /></label>
+    <button id="micToggle">🎤 Mic Off</button>
+    <button id="clearLog">🧹 Clear Log</button>
   </div>
 
   <div id="log" class="log"></div>

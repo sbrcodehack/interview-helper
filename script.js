@@ -1,10 +1,10 @@
 const apiURL = "https://script.google.com/macros/s/AKfycbzpewxrflhfwpk3fDlyE6y-cNqEVfk1XRecioxe6lPtPgeebz5LHaOteu5hv2lIjRnuXg/exec";
 let qaList = [];
-let askedQuestions = new Set();
 let shouldSpeak = true;
 let recognition = null;
 let isRecognizing = false;
-let previousLogs = [];
+let recentQuestions = [];
+let micEnabled = true;
 
 function similarity(a, b) {
   const common = a.split(" ").filter(w => b.includes(w)).length;
@@ -32,47 +32,44 @@ function speak(text) {
 
 function displayLog(original, matchedQ, answer) {
   const logEl = document.getElementById("log");
-  if (askedQuestions.has(matchedQ)) return;
-  askedQuestions.add(matchedQ);
+  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const recentOnlyQuestions = recentQuestions.map(q => q.question);
+  const isRepeat = recentOnlyQuestions.includes(matchedQ);
 
-  const timestamp = new Date().toLocaleTimeString([], {
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
-  });
+  if (!isRepeat || recentOnlyQuestions.length >= 3) {
+    if (!isRepeat) {
+      recentQuestions.unshift({ question: matchedQ, original, answer, timestamp });
+      if (recentQuestions.length > 3) recentQuestions.pop();
+    }
 
-  previousLogs.unshift({ original, matchedQ, answer, timestamp });
-  if (previousLogs.length > 4) previousLogs.pop();
-
-  logEl.innerHTML = '';
-  previousLogs.forEach((entry, index) => {
-    const block = document.createElement("div");
-    block.className = "block";
-
-    if (index === 0) {
+    logEl.innerHTML = "";
+    recentQuestions.forEach((entry, index) => {
+      const block = document.createElement("div");
+      block.className = "block";
+      const isLatest = index === 0;
       block.innerHTML = `
         <p><strong>🕒</strong> ${entry.timestamp}</p>
         <p><strong>👂 Heard:</strong> ${entry.original}</p>
-        <p style="font-size: 1rem; color: gray;"><strong>🔍 Matched:</strong> ${entry.matchedQ}</p>
-        <p style="font-size: 1.8rem; color: cyan;"><strong>📘 Answer:</strong> ${entry.answer}</p>
+        <p style="font-size: ${isLatest ? '1rem' : '0.9rem'}; color: gray;">
+          <strong>🔍 Matched:</strong> ${entry.question}
+        </p>
+        <p style="font-size: ${isLatest ? '1.8rem' : '1rem'}; color: ${isLatest ? 'cyan' : '#aaa'};">
+          <strong>📘 Answer:</strong> ${entry.answer}
+        </p>
+        ${entry.flagged ? `<p style="color: orange;">⚠️ Repeated Question</p>` : ""}
       `;
-    } else {
-      block.innerHTML = `
-        <p style="color: gray;">🕒 ${entry.timestamp}</p>
-        <p><strong>👂</strong> ${entry.original}</p>
-        <p style="font-size: 1rem; color: gray;"><strong>🔍</strong> ${entry.matchedQ}</p>
-        <p style="font-size: 0.9rem;"><strong>📘</strong> ${entry.answer}</p>
-      `;
-    }
+      logEl.appendChild(block);
+    });
 
-    logEl.appendChild(block);
-  });
-
-  speak(`Question: ${matchedQ}. Answer: ${answer}`);
+    speak(`Question: ${matchedQ}. Answer: ${answer}`);
+  } else {
+    recentQuestions[0].flagged = true;
+    displayLog(original, matchedQ, answer);
+  }
 }
 
 function startListening() {
-  if (isRecognizing || !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
-    return;
-  }
+  if (isRecognizing || !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) return;
 
   recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
   recognition.lang = "en-US";
@@ -85,6 +82,7 @@ function startListening() {
   };
 
   recognition.onresult = e => {
+    if (!micEnabled) return;
     const transcript = e.results[e.results.length - 1][0].transcript;
     const match = fuzzyMatch(transcript);
     if (match) {
@@ -92,16 +90,14 @@ function startListening() {
     }
   };
 
-  recognition.onerror = (e) => {
+  recognition.onerror = e => {
     console.warn("🎤 Error:", e.error);
     recognition.stop();
   };
 
   recognition.onend = () => {
     isRecognizing = false;
-    setTimeout(() => {
-      startListening(); // restart after short delay
-    }, 1500);
+    setTimeout(startListening, 1000);
   };
 
   recognition.start();
@@ -112,18 +108,29 @@ function loadQA() {
     .then(res => res.json())
     .then(data => {
       qaList = data;
-      startListening(); // Only start listening after Q&A loaded
+      startListening();
     })
     .catch(err => console.error("❌ Failed to fetch Q&A", err));
 }
 
+// Event setup
 window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("speakToggle").addEventListener("change", e => {
     shouldSpeak = e.target.checked;
   });
 
-  document.getElementById("themeToggle").addEventListener("change", e => {
+  document.getElementById("themeToggle").addEventListener("change", () => {
     document.body.classList.toggle("light");
+  });
+
+  document.getElementById("clearLog").addEventListener("click", () => {
+    document.getElementById("log").innerHTML = "";
+    recentQuestions = [];
+  });
+
+  document.getElementById("micToggle").addEventListener("click", e => {
+    micEnabled = !micEnabled;
+    e.target.textContent = micEnabled ? "🎤 Mic Off" : "🎤 Mic On";
   });
 
   loadQA();
