@@ -17,8 +17,8 @@
       background-color: #f8f8f8;
       color: #000;
     }
-    .header { display: flex; justify-content: space-between; align-items: center; }
-    .controls { margin: 1rem 0; display: flex; gap: 2rem; }
+    .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .controls { margin: 1rem 0; display: flex; gap: 2rem; flex-wrap: wrap; }
     .log { margin-top: 1rem; }
     .block {
       background: #222;
@@ -26,6 +26,10 @@
       padding: 1rem;
       margin-bottom: 1rem;
       border-radius: 6px;
+    }
+    .block.old .matched, .block.old .answer {
+      font-size: 1rem;
+      color: #ccc;
     }
     .matched {
       font-size: 1.2rem;
@@ -54,12 +58,24 @@
       opacity: 1;
       transform: scale(1.1);
     }
+    select {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <h2>🎙️ .NET Interview Helper</h2>
     <label>🌗 <input type="checkbox" id="themeToggle"> Toggle Theme</label>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <label for="categoryFilter">📂 Category: </label>
+    <select id="categoryFilter">
+      <option value="All">All</option>
+    </select>
   </div>
 
   <div id="repeatStatus" class="status-label">Status will appear here</div>

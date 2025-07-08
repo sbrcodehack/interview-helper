@@ -1,11 +1,12 @@
 const apiURL = "https://script.google.com/macros/s/AKfycbzpewxrflhfwpk3fDlyE6y-cNqEVfk1XRecioxe6lPtPgeebz5LHaOteu5hv2lIjRnuXg/exec";
 
 let qaList = [];
-let logQueue = []; // Track last 3 questions
+let logQueue = [];
 let shouldSpeak = false;
 let micEnabled = true;
 let recognition = null;
 let isRecognizing = false;
+let currentCategory = "All";
 
 function similarity(a, b) {
   const common = a.split(" ").filter(w => b.includes(w)).length;
@@ -16,6 +17,7 @@ function fuzzyMatch(input) {
   input = input.toLowerCase().trim();
   let best = { score: 0, question: null, answer: null };
   qaList.forEach(row => {
+    if (currentCategory !== "All" && row.Category !== currentCategory) return;
     const q = row.Question.toLowerCase().trim();
     const score = similarity(input, q);
     if (score > best.score) {
@@ -39,10 +41,13 @@ function displayLog(original, matchedQ, answer) {
   repeatStatusEl.textContent = isRepeat ? "🔁 Repeated Question" : "🆕 New Question";
   repeatStatusEl.style.color = isRepeat ? "orange" : "#00ff88";
   repeatStatusEl.classList.remove("show");
-  void repeatStatusEl.offsetWidth; // Restart animation
+  void repeatStatusEl.offsetWidth;
   repeatStatusEl.classList.add("show");
 
   if (isRepeat) return;
+
+  // Mark all old blocks
+  [...logEl.children].forEach(block => block.classList.add("old"));
 
   const block = document.createElement("div");
   block.className = "block";
@@ -92,19 +97,15 @@ function startListening() {
 
   recognition.onend = () => {
     isRecognizing = false;
-    if (micEnabled) {
-      setTimeout(startListening, 1000); // Auto-restart
-    }
+    if (micEnabled) setTimeout(startListening, 1000);
   };
 
   recognition.start();
 }
 
 function stopListening() {
-  if (recognition) {
-    recognition.stop();
-    isRecognizing = false;
-  }
+  if (recognition) recognition.stop();
+  isRecognizing = false;
 }
 
 function loadQA() {
@@ -112,10 +113,25 @@ function loadQA() {
     .then(res => res.json())
     .then(data => {
       qaList = data;
-      console.log("✅ Q&A Loaded");
+      populateCategories();
       startListening();
     })
     .catch(err => console.error("❌ Failed to fetch Q&A", err));
+}
+
+function populateCategories() {
+  const categoryFilter = document.getElementById("categoryFilter");
+  const categories = [...new Set(qaList.map(q => q.Category))];
+  categories.forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    categoryFilter.appendChild(opt);
+  });
+
+  categoryFilter.addEventListener("change", e => {
+    currentCategory = e.target.value;
+  });
 }
 
 window.addEventListener("DOMContentLoaded", () => {
