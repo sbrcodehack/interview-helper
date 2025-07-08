@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -17,21 +17,9 @@
       background-color: #f8f8f8;
       color: #000;
     }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .controls {
-      margin: 1rem 0;
-      display: flex;
-      gap: 2rem;
-      flex-wrap: wrap;
-    }
-    .log {
-      margin-top: 1rem;
-    }
+    .header { display: flex; justify-content: space-between; align-items: center; }
+    .controls { margin: 1rem 0; display: flex; gap: 2rem; }
+    .log { margin-top: 1rem; }
     .block {
       background: #222;
       border-left: 4px solid #00ff88;
@@ -39,13 +27,14 @@
       margin-bottom: 1rem;
       border-radius: 6px;
     }
-    .light .block {
-      background: #eee;
-      border-left: 4px solid #007755;
+    .matched {
+      font-size: 1.2rem;
+      color: #00e0ff;
     }
-    .timestamp {
-      font-size: 0.8rem;
-      color: gray;
+    .answer {
+      font-size: 1.6rem;
+      color: cyan;
+      font-weight: bold;
     }
     .footer {
       margin-top: 2rem;
@@ -53,22 +42,17 @@
       text-align: center;
       color: gray;
     }
-    .answer {
-      font-size: 1.5rem;
-      color: cyan;
-    }
-    .question {
-      font-size: 1rem;
-      color: #aaa;
-    }
-    .repeat-flag {
-      color: orange;
+    .status-label {
+      font-size: 1.3rem;
       font-weight: bold;
+      margin-bottom: 1rem;
+      transition: all 0.4s ease;
+      transform-origin: left;
+      opacity: 0;
     }
-    button {
-      font-family: inherit;
-      font-size: 1rem;
-      padding: 5px 10px;
+    .status-label.show {
+      opacity: 1;
+      transform: scale(1.1);
     }
   </style>
 </head>
@@ -78,8 +62,10 @@
     <label>🌗 <input type="checkbox" id="themeToggle"> Toggle Theme</label>
   </div>
 
+  <div id="repeatStatus" class="status-label">Status will appear here</div>
+
   <div class="controls">
-    <label>🔇 Mic: <input type="checkbox" id="micToggle" checked /></label>
+    <label>🎤 Mic: <input type="checkbox" id="micToggle" checked /></label>
     <label>🔊 Speak: <input type="checkbox" id="speakToggle" /></label>
     <button id="clearLog">🧹 Clear Log</button>
   </div>

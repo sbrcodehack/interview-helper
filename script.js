@@ -1,10 +1,11 @@
 const apiURL = "https://script.google.com/macros/s/AKfycbzpewxrflhfwpk3fDlyE6y-cNqEVfk1XRecioxe6lPtPgeebz5LHaOteu5hv2lIjRnuXg/exec";
+
 let qaList = [];
-let logQueue = [];
+let logQueue = []; // Track last 3 questions
 let shouldSpeak = false;
+let micEnabled = true;
 let recognition = null;
 let isRecognizing = false;
-let micOn = true;
 
 function similarity(a, b) {
   const common = a.split(" ").filter(w => b.includes(w)).length;
@@ -32,41 +33,39 @@ function speak(text) {
 
 function displayLog(original, matchedQ, answer) {
   const logEl = document.getElementById("log");
-  const isRepeat = logQueue.some(log => log.q === matchedQ);
+  const repeatStatusEl = document.getElementById("repeatStatus");
 
-  if (!isRepeat) {
-    logQueue.unshift({ q: matchedQ });
-  }
+  const isRepeat = logQueue.some(log => log.q === matchedQ);
+  repeatStatusEl.textContent = isRepeat ? "🔁 Repeated Question" : "🆕 New Question";
+  repeatStatusEl.style.color = isRepeat ? "orange" : "#00ff88";
+  repeatStatusEl.classList.remove("show");
+  void repeatStatusEl.offsetWidth; // Restart animation
+  repeatStatusEl.classList.add("show");
+
+  if (isRepeat) return;
 
   const block = document.createElement("div");
   block.className = "block";
-
-  const time = new Date().toLocaleTimeString();
-
   block.innerHTML = `
     <p><strong>👂 Heard:</strong> ${original}</p>
-    <p class="question">🔍 Matched: ${matchedQ} ${isRepeat ? '<span class="repeat-flag">🔁 Repeated</span>' : ''}</p>
-    <p class="answer">📘 ${answer}</p>
-    <p class="timestamp">🕒 ${time}</p>
+    <p class="matched">🔍 Matched: ${matchedQ}</p>
+    <p class="answer">📘 Answer: ${answer}</p>
   `;
-
   logEl.prepend(block);
 
-  while (logEl.children.length > 3) {
-    logEl.removeChild(logEl.lastChild);
+  logQueue.unshift({ q: matchedQ });
+  if (logQueue.length > 3) {
     logQueue.pop();
+    if (logEl.children.length > 3) {
+      logEl.removeChild(logEl.lastChild);
+    }
   }
 
   speak(`Question: ${matchedQ}. Answer: ${answer}`);
 }
 
 function startListening() {
-  if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
-    alert("Speech recognition not supported!");
-    return;
-  }
-
-  if (isRecognizing) return;
+  if (isRecognizing || !micEnabled) return;
 
   recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
   recognition.lang = "en-US";
@@ -75,34 +74,36 @@ function startListening() {
 
   recognition.onstart = () => {
     isRecognizing = true;
-    console.log("🎤 Mic ON...");
+    console.log("🎤 Listening...");
   };
 
   recognition.onresult = e => {
-    if (!micOn) return;
     const transcript = e.results[e.results.length - 1][0].transcript;
     const match = fuzzyMatch(transcript);
-    if (match) displayLog(transcript, match.question, match.answer);
+    if (match) {
+      displayLog(transcript, match.question, match.answer);
+    }
   };
 
-  recognition.onerror = (e) => {
+  recognition.onerror = e => {
     console.warn("🎤 Error:", e.error);
     recognition.stop();
   };
 
   recognition.onend = () => {
     isRecognizing = false;
-    if (micOn) setTimeout(startListening, 1000);
+    if (micEnabled) {
+      setTimeout(startListening, 1000); // Auto-restart
+    }
   };
 
   recognition.start();
 }
 
 function stopListening() {
-  if (recognition && isRecognizing) {
+  if (recognition) {
     recognition.stop();
     isRecognizing = false;
-    console.log("🔇 Mic OFF...");
   }
 }
 
@@ -111,23 +112,24 @@ function loadQA() {
     .then(res => res.json())
     .then(data => {
       qaList = data;
+      console.log("✅ Q&A Loaded");
       startListening();
     })
     .catch(err => console.error("❌ Failed to fetch Q&A", err));
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("themeToggle").addEventListener("change", e => {
-    document.body.classList.toggle("light", e.target.checked);
-  });
-
   document.getElementById("speakToggle").addEventListener("change", e => {
     shouldSpeak = e.target.checked;
   });
 
+  document.getElementById("themeToggle").addEventListener("change", e => {
+    document.body.classList.toggle("light");
+  });
+
   document.getElementById("micToggle").addEventListener("change", e => {
-    micOn = e.target.checked;
-    if (micOn) {
+    micEnabled = e.target.checked;
+    if (micEnabled) {
       startListening();
     } else {
       stopListening();
@@ -135,8 +137,10 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("clearLog").addEventListener("click", () => {
-    document.getElementById("log").innerHTML = "";
     logQueue = [];
+    document.getElementById("log").innerHTML = "";
+    document.getElementById("repeatStatus").textContent = "🧹 Log cleared";
+    document.getElementById("repeatStatus").style.color = "gray";
   });
 
   loadQA();
