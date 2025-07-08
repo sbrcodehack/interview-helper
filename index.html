@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>.NET Interview Helper - Shabbeer</title>
+  <link rel="icon" href="data:,"> <!-- Avoid 404 favicon error -->
   <script defer src="script.js"></script>
   <style>
     body {
@@ -12,63 +13,69 @@
       color: #fff;
       margin: 0;
       padding: 1rem;
+      transition: background 0.3s, color 0.3s;
     }
+
     .light {
       background-color: #f8f8f8;
       color: #000;
     }
-    .header {
+
+    .header, .controls, .footer {
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-    }
-    .controls {
-      display: flex;
       gap: 1rem;
-      flex-wrap: wrap;
-      margin: 1rem 0;
     }
-    .log { margin-top: 1rem; }
+
+    select, button, input[type="checkbox"] {
+      font-family: inherit;
+      padding: 0.3rem;
+    }
+
+    .log {
+      margin-top: 1rem;
+    }
+
     .block {
       background: #222;
       border-left: 4px solid #00ff88;
       padding: 1rem;
       margin-bottom: 1rem;
       border-radius: 6px;
-      transition: background 0.3s;
     }
-    .block.latest {
-      background: #003322;
+
+    .light .block {
+      background: #ddd;
+      border-color: #007755;
     }
-    .block.repeat {
-      border-left-color: orange;
-    }
-    .question {
+
+    .block:not(.latest) .question {
       font-size: 1rem;
     }
+
     .block.latest .question {
-      font-size: 1.4rem;
+      font-size: 1.6rem;
       color: cyan;
     }
+
+    .repeat {
+      animation: blink 1s infinite;
+      color: orange;
+      font-weight: bold;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
     .footer {
       margin-top: 2rem;
       font-size: 0.9rem;
-      text-align: center;
+      justify-content: center;
       color: gray;
-    }
-    .live-banner {
-      background: crimson;
-      color: white;
-      padding: 4px 8px;
-      display: inline-block;
-      font-size: 0.8rem;
-      border-radius: 4px;
-      margin-top: 8px;
-    }
-    .status {
-      margin-top: 0.5rem;
-      font-weight: bold;
     }
   </style>
 </head>
@@ -76,26 +83,26 @@
   <div class="header">
     <h2>🎙️ .NET Interview Helper</h2>
     <label>🌗 <input type="checkbox" id="themeToggle"> Toggle Theme</label>
+    <label>🔊 Speak: <input type="checkbox" id="speakToggle"></label>
+    <button id="micToggle">🎤 Mic On</button>
+    <button id="clearLog">🧹 Clear Log</button>
   </div>
 
   <div class="controls">
-    <label>🔊 Speak: <input type="checkbox" id="speakToggle" /></label>
-    <button id="micToggle">🎤 Mic On</button>
-    <button id="clearLog">🗑️ Clear Log</button>
-    <label>🎯 Mode:
-      <select id="modeSelect">
-        <option>Practice Mode</option>
-        <option>Live Interview</option>
-      </select>
-    </label>
-    <label>📁 Category:
+    <label>Status: <span id="status">Mic is OFF</span></label>
+    <label>Category:
       <select id="categorySelect">
         <option>All</option>
       </select>
     </label>
+    <label>Mode:
+      <select id="modeSelect">
+        <option>Practice</option>
+        <option>Live Interview</option>
+      </select>
+    </label>
   </div>
 
-  <div id="status" class="status">Mic is OFF</div>
   <div id="log" class="log"></div>
 
   <div class="footer">

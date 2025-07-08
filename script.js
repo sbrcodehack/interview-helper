@@ -1,4 +1,5 @@
 const apiURL = "https://script.google.com/macros/s/AKfycbzpewxrflhfwpk3fDlyE6y-cNqEVfk1XRecioxe6lPtPgeebz5LHaOteu5hv2lIjRnuXg/exec";
+
 let qaList = [];
 let askedLog = [];
 let shouldSpeak = false;
@@ -55,10 +56,9 @@ function displayLog(original, matchedQ, answer) {
     <p class="question"><strong>🔍 Matched:</strong> ${matchedQ}</p>
     <p><strong>📘 Answer:</strong> ${answer}</p>
     ${isRepeat ? '<p class="repeat">⚠️ Repeated Question</p>' : ""}
-    ${mode === "Live Interview" ? '<div class="live-banner">LIVE INTERVIEW MODE</div>' : ""}
+    ${mode === "Live Interview" ? '<div class="repeat">🔴 LIVE INTERVIEW MODE</div>' : ""}
   `;
 
-  // Clear old logs and show only 3
   const logs = logEl.querySelectorAll(".block");
   logs.forEach(l => l.classList.remove("latest"));
   if (logs.length >= 3) logs[2].remove();
@@ -111,7 +111,19 @@ function toggleMic() {
 function loadQA() {
   fetch(apiURL)
     .then(res => res.json())
-    .then(data => qaList = data)
+    .then(data => {
+      qaList = data;
+      const categorySelect = document.getElementById("categorySelect");
+      const categories = new Set(["All"]);
+      data.forEach(row => categories.add(row.Category));
+      categorySelect.innerHTML = "";
+      categories.forEach(cat => {
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = cat;
+        categorySelect.appendChild(option);
+      });
+    })
     .catch(err => console.error("❌ Failed to fetch Q&A", err));
 }
 
