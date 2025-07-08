@@ -1,23 +1,20 @@
 const apiURL = "https://script.google.com/macros/s/AKfycbzpewxrflhfwpk3fDlyE6y-cNqEVfk1XRecioxe6lPtPgeebz5LHaOteu5hv2lIjRnuXg/exec";
-
 let qaList = [];
-let logQueue = [];
+let askedLog = [];
 let shouldSpeak = false;
-let micEnabled = true;
-let recognition = null;
-let isRecognizing = false;
-let currentCategory = "All";
+let micOn = false;
+let recognition;
 
 function similarity(a, b) {
   const common = a.split(" ").filter(w => b.includes(w)).length;
   return (common * 2) / (a.split(" ").length + b.split(" ").length) * 100;
 }
 
-function fuzzyMatch(input) {
+function fuzzyMatch(input, category) {
   input = input.toLowerCase().trim();
   let best = { score: 0, question: null, answer: null };
   qaList.forEach(row => {
-    if (currentCategory !== "All" && row.Category !== currentCategory) return;
+    if (category !== "All" && row.Category !== category) return;
     const q = row.Question.toLowerCase().trim();
     const score = similarity(input, q);
     if (score > best.score) {
@@ -33,105 +30,89 @@ function speak(text) {
   speechSynthesis.speak(utterance);
 }
 
+function getTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 function displayLog(original, matchedQ, answer) {
   const logEl = document.getElementById("log");
-  const repeatStatusEl = document.getElementById("repeatStatus");
+  const category = document.getElementById("categorySelect").value;
+  const mode = document.getElementById("modeSelect").value;
 
-  const isRepeat = logQueue.some(log => log.q === matchedQ);
-  repeatStatusEl.textContent = isRepeat ? "🔁 Repeated Question" : "🆕 New Question";
-  repeatStatusEl.style.color = isRepeat ? "orange" : "#00ff88";
-  repeatStatusEl.classList.remove("show");
-  void repeatStatusEl.offsetWidth;
-  repeatStatusEl.classList.add("show");
+  const isRepeat = askedLog.includes(matchedQ);
+  if (isRepeat && askedLog.slice(0, 3).includes(matchedQ)) return;
 
-  if (isRepeat) return;
-
-  // Mark all old blocks
-  [...logEl.children].forEach(block => block.classList.add("old"));
+  askedLog.unshift(matchedQ);
+  if (askedLog.length > 10) askedLog.pop();
 
   const block = document.createElement("div");
-  block.className = "block";
+  block.className = "block latest";
+  if (isRepeat) block.classList.add("repeat");
+
   block.innerHTML = `
+    <p><strong>⏱️ ${getTime()}</strong></p>
     <p><strong>👂 Heard:</strong> ${original}</p>
-    <p class="matched">🔍 Matched: ${matchedQ}</p>
-    <p class="answer">📘 Answer: ${answer}</p>
+    <p class="question"><strong>🔍 Matched:</strong> ${matchedQ}</p>
+    <p><strong>📘 Answer:</strong> ${answer}</p>
+    ${isRepeat ? '<p class="repeat">⚠️ Repeated Question</p>' : ""}
+    ${mode === "Live Interview" ? '<div class="live-banner">LIVE INTERVIEW MODE</div>' : ""}
   `;
+
+  // Clear old logs and show only 3
+  const logs = logEl.querySelectorAll(".block");
+  logs.forEach(l => l.classList.remove("latest"));
+  if (logs.length >= 3) logs[2].remove();
+
   logEl.prepend(block);
-
-  logQueue.unshift({ q: matchedQ });
-  if (logQueue.length > 3) {
-    logQueue.pop();
-    if (logEl.children.length > 3) {
-      logEl.removeChild(logEl.lastChild);
-    }
-  }
-
   speak(`Question: ${matchedQ}. Answer: ${answer}`);
 }
 
-function startListening() {
-  if (isRecognizing || !micEnabled) return;
-
+function startRecognition() {
+  if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) return;
   recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
   recognition.lang = "en-US";
   recognition.continuous = true;
   recognition.interimResults = false;
 
-  recognition.onstart = () => {
-    isRecognizing = true;
-    console.log("🎤 Listening...");
-  };
-
   recognition.onresult = e => {
     const transcript = e.results[e.results.length - 1][0].transcript;
-    const match = fuzzyMatch(transcript);
-    if (match) {
-      displayLog(transcript, match.question, match.answer);
-    }
+    const category = document.getElementById("categorySelect").value;
+    const match = fuzzyMatch(transcript, category);
+    if (match) displayLog(transcript, match.question, match.answer);
   };
 
   recognition.onerror = e => {
-    console.warn("🎤 Error:", e.error);
+    console.warn("Mic Error:", e.error);
     recognition.stop();
   };
 
   recognition.onend = () => {
-    isRecognizing = false;
-    if (micEnabled) setTimeout(startListening, 1000);
+    if (micOn) setTimeout(() => recognition.start(), 1000);
   };
 
   recognition.start();
 }
 
-function stopListening() {
-  if (recognition) recognition.stop();
-  isRecognizing = false;
+function toggleMic() {
+  const status = document.getElementById("status");
+  const micBtn = document.getElementById("micToggle");
+  micOn = !micOn;
+  if (micOn) {
+    status.textContent = "🎤 Mic is ON";
+    micBtn.textContent = "🔇 Mic Off";
+    startRecognition();
+  } else {
+    status.textContent = "Mic is OFF";
+    micBtn.textContent = "🎤 Mic On";
+    if (recognition) recognition.stop();
+  }
 }
 
 function loadQA() {
   fetch(apiURL)
     .then(res => res.json())
-    .then(data => {
-      qaList = data;
-      populateCategories();
-      startListening();
-    })
+    .then(data => qaList = data)
     .catch(err => console.error("❌ Failed to fetch Q&A", err));
-}
-
-function populateCategories() {
-  const categoryFilter = document.getElementById("categoryFilter");
-  const categories = [...new Set(qaList.map(q => q.Category))];
-  categories.forEach(cat => {
-    const opt = document.createElement("option");
-    opt.value = cat;
-    opt.textContent = cat;
-    categoryFilter.appendChild(opt);
-  });
-
-  categoryFilter.addEventListener("change", e => {
-    currentCategory = e.target.value;
-  });
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -143,20 +124,11 @@ window.addEventListener("DOMContentLoaded", () => {
     document.body.classList.toggle("light");
   });
 
-  document.getElementById("micToggle").addEventListener("change", e => {
-    micEnabled = e.target.checked;
-    if (micEnabled) {
-      startListening();
-    } else {
-      stopListening();
-    }
-  });
+  document.getElementById("micToggle").addEventListener("click", toggleMic);
 
   document.getElementById("clearLog").addEventListener("click", () => {
-    logQueue = [];
     document.getElementById("log").innerHTML = "";
-    document.getElementById("repeatStatus").textContent = "🧹 Log cleared";
-    document.getElementById("repeatStatus").style.color = "gray";
+    askedLog = [];
   });
 
   loadQA();
