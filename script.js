@@ -1,4 +1,4 @@
-const apiURL = "https://script.google.com/macros/s/AKfycbzoU-IBJGCUn705tJLP-5s8osDJmnbd_yiuhRzzA2Jfki-4M3S94b7cf5S0-gQE-IId2A/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbzpewxrflhfwpk3fDlyE6y-cNqEVfk1XRecioxe6lPtPgeebz5LHaOteu5hv2lIjRnuXg/exec";
 
 let qaList = [];
 let askedLog = []; // Now stores objects: { question, timestamp }
@@ -41,18 +41,17 @@ function displayLog(original, matchedQ, answer) {
   const mode = document.getElementById("modeSelect").value;
 
   const now = Date.now();
-  const existing = askedLog.find(entry => entry.question === matchedQ);
-  const isRepeat = !!existing;
+  const existingIndex = askedLog.findIndex(entry => entry.question === matchedQ);
+  const isRepeat = existingIndex !== -1;
 
-  if (isRepeat && now - existing.timestamp < 60000) return;
-
-  if (!isRepeat) {
-    askedLog.unshift({ question: matchedQ, timestamp: now });
+  if (isRepeat && now - askedLog[existingIndex].timestamp < 60000) {
+    // Still update UI to show it's a repeat, but don't add to askedLog
   } else {
-    existing.timestamp = now;
-    askedLog = [existing, ...askedLog.filter(entry => entry.question !== matchedQ)];
+    const newEntry = { question: matchedQ, timestamp: now };
+    if (isRepeat) askedLog.splice(existingIndex, 1);
+    askedLog.unshift(newEntry);
+    if (askedLog.length > 10) askedLog.pop();
   }
-  if (askedLog.length > 10) askedLog.pop();
 
   const block = document.createElement("div");
   block.className = "block latest";
@@ -62,7 +61,7 @@ function displayLog(original, matchedQ, answer) {
     <p><strong>⏱️ ${getTime()}</strong></p>
     <p><strong>👂 Heard:</strong> ${original}</p>
     <p class="question"><strong>🔍 Matched:</strong> ${matchedQ}</p>
-    <p><strong>📘 Answer:</strong> ${answer}</p>
+    <p class="answer" style="font-size: 1.3rem;"><strong>📘 Answer:</strong> ${answer}</p>
     ${isRepeat ? '<p class="repeat">⚠️ Repeated Question (within last 60s)</p>' : ""}
     ${mode === "Live Interview" ? '<div class="repeat">🔴 LIVE INTERVIEW MODE</div>' : ""}
   `;
@@ -139,13 +138,17 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("speakToggle").addEventListener("change", e => {
     shouldSpeak = e.target.checked;
   });
+
   document.getElementById("themeToggle").addEventListener("change", e => {
     document.body.classList.toggle("light");
   });
+
   document.getElementById("micToggle").addEventListener("click", toggleMic);
+
   document.getElementById("clearLog").addEventListener("click", () => {
     document.getElementById("log").innerHTML = "";
     askedLog = [];
   });
+
   loadQA();
 });
