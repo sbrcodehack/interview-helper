@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload Questions</title>
+  <link rel="icon" href="data:,">
+  <script defer src="upload.js"></script>
+  <style>
+    body {
+      font-family: Consolas, monospace;
+      background-color: #111;
+      color: #fff;
+      padding: 1rem;
+    }
+    label, textarea, input, select {
+      display: block;
+      margin: 0.5rem 0;
+      width: 100%;
+      padding: 0.5rem;
+      font-family: inherit;
+    }
+    textarea {
+      height: 100px;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      background-color: #00ff88;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 0.5rem;
+    }
+    .light {
+      background-color: #f8f8f8;
+      color: #000;
+    }
+    .recent {
+      margin-top: 1rem;
+    }
+    .recent p {
+      margin: 0.2rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h2>📝 Upload Question</h2>
+  <a href="index.html" style="color: lightblue;">🔙 Back to Main Page</a>
+  
+  <label>Category:
+    <select id="uploadCategory"></select>
+  </label>
+  <input id="newCategoryInput" placeholder="New Category" style="display: none;" />
+
+  <label>Question:
+    <input id="uploadQuestion" placeholder="Enter your question" />
+  </label>
+
+  <label>Answer:
+    <textarea id="uploadAnswer" placeholder="Enter answer..."></textarea>
+  </label>
+
+  <button onclick="submitQuestion()">📤 Submit</button>
+  <div id="uploadStatus" class="status"></div>
+
+  <div id="uploadHistory" class="recent"></div>
+</body>
+</html>
